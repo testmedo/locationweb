@@ -3,40 +3,58 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>تحديد الموقع الجغرافي</title>
+    <title>تحديد الموقع تلقائيًا</title>
 </head>
 <body>
-    <h2>تحقق من موقعك</h2>
-    <button onclick="getLocation()">تحقق الآن</button>
-    <p id="status">جاري التحميل...</p>
+    <h2>موقعك الحالي:</h2>
+    <p id="location">جاري تحديد موقعك...</p>
 
     <script>
         function getLocation() {
             if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(sendLocation, showError);
+                navigator.geolocation.getCurrentPosition(showPosition, showError);
             } else {
-                document.getElementById("status").innerHTML = "⚠️ المتصفح لا يدعم تحديد الموقع.";
+                document.getElementById("location").innerText = "المتصفح لا يدعم تحديد الموقع.";
             }
         }
 
-        function sendLocation(position) {
-            let lat = position.coords.latitude.toFixed(6);
-            let lng = position.coords.longitude.toFixed(6);
+        function showPosition(position) {
+            let lat = position.coords.latitude.toFixed(5);
+            let lon = position.coords.longitude.toFixed(5);
 
-            fetch(`https://your-api-url.com/check_location/?lat=${lat}&lng=${lng}`)
-            .then(response => response.json())
-            .then(data => {
-                document.getElementById("status").innerHTML = `🔹 الحالة: ${data.status} | المسافة: ${data.distance_km} كم`;
-            })
-            .catch(error => {
-                document.getElementById("status").innerHTML = "❌ خطأ في الاتصال بـ API";
-                console.error("❌ خطأ: ", error);
-            });
+            document.getElementById("location").innerHTML = `إحداثياتك: ${lat}, ${lon}`;
+
+            // إرسال الإحداثيات إلى OpenCage API
+            let apiKey = "080b905eb3d24403af485a883ad3abc3";
+            let url = `https://api.opencagedata.com/geocode/v1/json?q=${lat}+${lon}&key=${apiKey}&language=ar`;
+
+            fetch(url)
+                .then(response => response.json())
+                .then(data => {
+                    let locationInfo = data.results[0].formatted;
+                    document.getElementById("location").innerHTML += `<br>الموقع: ${locationInfo}`;
+                })
+                .catch(error => console.error("حدث خطأ:", error));
         }
 
         function showError(error) {
-            document.getElementById("status").innerHTML = "⚠️ لم نتمكن من تحديد موقعك.";
+            let errorMsg = "تعذر تحديد الموقع.";
+            switch (error.code) {
+                case error.PERMISSION_DENIED:
+                    errorMsg = "تم رفض طلب تحديد الموقع.";
+                    break;
+                case error.POSITION_UNAVAILABLE:
+                    errorMsg = "معلومات الموقع غير متوفرة.";
+                    break;
+                case error.TIMEOUT:
+                    errorMsg = "انتهت مهلة طلب الموقع.";
+                    break;
+            }
+            document.getElementById("location").innerText = errorMsg;
         }
+
+        // تشغيل تحديد الموقع تلقائيًا عند تحميل الصفحة
+        window.onload = getLocation;
     </script>
 </body>
 </html>
