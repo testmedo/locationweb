@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تحديد الموقع الجغرافي</title>
+</head>
+<body>
+    <h2>تحقق من موقعك</h2>
+    <button onclick="getLocation()">تحقق الآن</button>
+    <p id="status">جاري التحميل...</p>
+
+    <script>
+        function getLocation() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(sendLocation, showError);
+            } else {
+                document.getElementById("status").innerHTML = "⚠️ المتصفح لا يدعم تحديد الموقع.";
+            }
+        }
+
+        function sendLocation(position) {
+            let lat = position.coords.latitude.toFixed(6);
+            let lng = position.coords.longitude.toFixed(6);
+
+            fetch(`https://your-api-url.com/check_location/?lat=${lat}&lng=${lng}`)
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById("status").innerHTML = `🔹 الحالة: ${data.status} | المسافة: ${data.distance_km} كم`;
+            })
+            .catch(error => {
+                document.getElementById("status").innerHTML = "❌ خطأ في الاتصال بـ API";
+                console.error("❌ خطأ: ", error);
+            });
+        }
+
+        function showError(error) {
+            document.getElementById("status").innerHTML = "⚠️ لم نتمكن من تحديد موقعك.";
+        }
+    </script>
+</body>
+</html>
